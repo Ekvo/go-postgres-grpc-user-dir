@@ -1,7 +1,11 @@
 package deserializer
 
-import "errors"
+import (
+	"errors"
+	"regexp"
+)
 
+// mark Errors to create a detailed problem object for the error response
 var (
 	ErrDeserializerEmpty = errors.New("empty")
 
@@ -9,3 +13,6 @@ var (
 
 	ErrDeserializerMetadataEmpty = errors.New("missing metadata")
 )
+
+// reEmail - regexp for check email from request
+var reEmail = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)

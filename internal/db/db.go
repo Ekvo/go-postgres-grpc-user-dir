@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"time"
 
@@ -49,6 +50,7 @@ func OpenPool(ctx context.Context, cfg *config.Config) (*provider, error) {
 
 func (p *provider) ClosePool() {
 	p.dbPool.Close()
+	log.Print("db: *pgxpool.Pool is closed")
 }
 
 func initPool(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {

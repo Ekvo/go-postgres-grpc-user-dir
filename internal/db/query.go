@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 
@@ -51,10 +50,35 @@ LIMIT 1;`, id)
 }
 
 func (p *provider) UpdateUser(ctx context.Context, user *model.User) error {
-	return nil
+	upID := uint(0)
+	err := p.dbPool.QueryRow(ctx, `
+UPDATE users
+SET login = $2,
+    password = $3,
+    first_name = $4,
+    last_name = $5,
+    email = $6,
+    updated_at = $7
+WHERE id = $1
+RETURNING id;`,
+		user.ID,                                //1
+		user.Login,                             //2
+		user.Password,                          //3
+		user.FirstName,                         //4
+		whenStringEmptyThenNULL(user.LastName), //5
+		user.Email,                             //6
+		user.UpdatedAt,                         //7
+	).Scan(&upID)
+	return err
 }
 func (p *provider) RemoveUserByID(ctx context.Context, id uint) error {
-	return nil
+	delID := uint(0)
+	err := p.dbPool.QueryRow(ctx, `
+DELETE
+FROM users
+WHERE id = $1
+RETURNING id;`, id).Scan(&delID)
+	return err
 }
 
 func scanUser(row pgx.Row) (*model.User, error) {
@@ -83,13 +107,6 @@ func scanUser(row pgx.Row) (*model.User, error) {
 		user.UpdatedAt = &updatedAt.Time
 	}
 	return &user, nil
-}
-
-func whenTimeIzZeroThenNULL(date *time.Time) *time.Time {
-	if date == nil || date.IsZero() {
-		return nil
-	}
-	return date
 }
 
 func whenStringEmptyThenNULL(s string) *string {

@@ -2,6 +2,9 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/app"
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/config"
@@ -12,5 +15,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("main: config error - %v", err)
 	}
-	app.Run(cfg)
+
+	application, err := app.NewApplication(cfg)
+	if err != nil {
+		log.Fatalf("main: application error - %v", err)
+	}
+
+	application.Run()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+
+	application.Stop()
 }

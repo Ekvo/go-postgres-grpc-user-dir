@@ -23,7 +23,7 @@ FROM alpine:latest
 LABEL authors="ekvo"
 
 ENV DB_URL=postgresql://user-manager:qwert12345@db:5432/user-store
-ENV SRV_PORT=50051
+ENV SRV_PORT_USER=50051
 ENV SRV_NETWORK=tcp
 ENV JWT_SECRET=StatusSeeOther
 

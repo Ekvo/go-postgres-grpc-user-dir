@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	user "github.com/Ekvo/go-postgres-grpc-apis/user/v1"
+	user "github.com/Ekvo/go-grpc-apis/user/v1"
 
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/model"
 	"github.com/Ekvo/go-postgres-grpc-user-dir/pkg/utils"
@@ -25,7 +25,7 @@ func (ul *LoginDecode) Model() *model.Login {
 	return &ul.login
 }
 
-func (ul *LoginDecode) Decode(req *user.LoginRequest) error {
+func (ul *LoginDecode) Decode(req *user.UserLoginRequest) error {
 	ul.parseReq(req)
 	if err := ul.validReq(); err != nil {
 		return err
@@ -39,7 +39,7 @@ func (ul *LoginDecode) setUser() {
 	ul.login.Password = ul.Password
 }
 
-func (ul *LoginDecode) parseReq(req *user.LoginRequest) {
+func (ul *LoginDecode) parseReq(req *user.UserLoginRequest) {
 	ul.Email = req.GetEmail()
 	ul.Password = req.GetPassword()
 }
@@ -53,7 +53,7 @@ func (ul *LoginDecode) validReq() error {
 		msgErr["password"] = ErrDeserializerEmpty
 	}
 	if len(msgErr) > 0 {
-		return fmt.Errorf("deserializer: invalid signup - %s", msgErr.String())
+		return fmt.Errorf("deserializer: invalid login - %s", msgErr.String())
 	}
 	return nil
 }

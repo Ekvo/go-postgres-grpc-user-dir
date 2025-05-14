@@ -13,7 +13,7 @@ services:
     image: go-postgres-grpc-user-dir:${IMAGE_VERSION}
     build: .
     ports:
-      - "${SRV_PORT}:${SRV_PORT}"
+      - "${SRV_PORT_USER}:${SRV_PORT_USER}"
     entrypoint: /bin/sh
     command: /start.sh
 

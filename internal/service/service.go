@@ -1,22 +1,29 @@
 package service
 
 import (
-	user "github.com/Ekvo/go-postgres-grpc-apis/user/v1"
+	"errors"
 
-	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/config"
+	user "github.com/Ekvo/go-grpc-apis/user/v1"
+
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/db"
+)
+
+var (
+	ErrServiceInternal = errors.New("internal error")
+
+	ErrServiceNotFound = errors.New("not found")
+
+	ErrServiceAlreadyExists = errors.New("already exists")
+
+	ErrServiceAuthorizationInvalid = errors.New("invalid authorization")
+
+	ErrServicePasswordInvalid = errors.New("invalid password")
+
+	ErrServiceUpdateDataInvalid = errors.New("invalid update data")
 )
 
 type Service interface {
 	user.UserServiceServer
-}
-
-type Options struct {
-	JWTSecret string
-}
-
-func NewOptions(cfg *config.Config) Options {
-	return Options{JWTSecret: cfg.JWTSecretKey}
 }
 
 type Depends struct {
@@ -28,10 +35,9 @@ func NewDepends(dbProvider db.Provider) Depends {
 }
 
 type service struct {
-	Options
 	Depends
 }
 
-func NewService(opt Options, dep Depends) *service {
-	return &service{Options: opt, Depends: dep}
+func NewService(dep Depends) *service {
+	return &service{Depends: dep}
 }

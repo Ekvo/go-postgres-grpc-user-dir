@@ -2,72 +2,76 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
+	"net"
 	"time"
 
-	user "github.com/Ekvo/go-postgres-grpc-apis/user/v1"
+	user "github.com/Ekvo/go-grpc-apis/user/v1"
 	"google.golang.org/grpc"
 
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/config"
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/db"
+	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/lib/jwtsign"
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/listen"
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/service"
 )
 
-type App struct {
-	service.Service
+type Application struct {
+	userRepository db.Provider
+	userService    service.Service
+	srv            *grpc.Server
+	listener       net.Listener
 }
 
-func NewApplication(usecase service.Service) *App {
-	return &App{Service: usecase}
-}
-
-func Run(cfg *config.Config) {
-	ctx := context.Background()
-
-	dbProvider, err := db.OpenPool(ctx, cfg)
-	if err != nil {
-		log.Fatalf("app: db open error - %v", err)
+func NewApplication(cfg *config.Config) (*Application, error) {
+	if err := jwtsign.NewSecretKey(cfg); err != nil {
+		return nil, fmt.Errorf("app: jwt error - %w", err)
 	}
-	defer dbProvider.ClosePool()
 
-	app := NewApplication(
-		service.NewService(
-			service.NewOptions(cfg),
-			service.NewDepends(dbProvider),
-		))
+	listener, err := listen.NewListen(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("app: Listener error - %w", err)
+	}
 
-	srv := grpc.NewServer()
+	dbProvider, err := db.OpenPool(context.Background(), cfg)
+	if err != nil {
+		return nil, fmt.Errorf("app: db error - %w", err)
+	}
 
-	user.RegisterUserServiceServer(srv, app)
+	app := &Application{}
+	app.userRepository = dbProvider
+	app.userService = service.NewService(service.NewDepends(dbProvider))
+	app.srv = grpc.NewServer(grpc.UnaryInterceptor(service.Authorization))
+	app.listener = listener
+
+	return app, nil
+}
+
+func (a *Application) Run() {
+	user.RegisterUserServiceServer(a.srv, a.userService)
 
 	go func() {
-		listener, err := listen.NewListen(cfg)
-		if err != nil {
-			log.Fatalf("go app: net.Listen error - %v", err)
-		}
-		if err := srv.Serve(listener.Listener); err != nil {
+		if err := a.srv.Serve(a.listener); err != nil {
+			a.userRepository.ClosePool()
 			log.Fatalf("go app: server error - %v", err)
 		}
 		log.Print("go app: stopped serving\n")
 	}()
+}
 
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	<-sigChan
+func (a *Application) Stop() {
+	defer a.userRepository.ClosePool()
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	srv.GracefulStop()
+	a.srv.GracefulStop()
 
 	select {
 	case <-ctx.Done():
 		log.Print("app: shutdown took too long, forcing stop")
-		srv.Stop()
+		a.srv.Stop()
 	case <-time.After(10 * time.Second):
 		log.Print("app: server stopped gracefully")
 	}

@@ -15,7 +15,7 @@ import (
 type Config struct {
 	DBURL string `mapstructure:"DB_URL"`
 
-	SRVPort    string `mapstructure:"SRV_PORT"`
+	SRVPort    string `mapstructure:"SRV_PORT_USER"`
 	SRVNetwork string `mapstructure:"SRV_NETWORK"`
 
 	JWTSecretKey string `mapstructure:"JWT_SECRET"`
@@ -45,7 +45,7 @@ func NewConfig(pathToEnv string) (*Config, error) {
 func getNameEnv() []string {
 	return []string{
 		"DB_URL",
-		"SRV_PORT",
+		"SRV_PORT_USER",
 		"SRV_NETWORK",
 		"JWT_SECRET",
 	}

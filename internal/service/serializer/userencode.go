@@ -1,8 +1,9 @@
 package serializer
 
 import (
-	user "github.com/Ekvo/go-postgres-grpc-apis/user/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	user "github.com/Ekvo/go-grpc-apis/user/v1"
 
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/model"
 )
