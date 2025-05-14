@@ -2,7 +2,7 @@
 
 ---
 
-This repository implemetn **proto** file: [go-postgres-grpc-apis/user/v1](https://github.com/Ekvo/go-postgres-grpc-apis/tree/main/user/v1 "https://github.com/Ekvo/go-postgres-grpc-apis/tree/main/user/v1")  
+This repository implemetn **proto** file: [go-grpc-apis/user/v1](https://github.com/Ekvo/go-grpc-apis/tree/main/user/v1 "https://github.com/Ekvo/go-grpc-apis/tree/main/user/v1")  
 
 ```protobuf
 service UserService {
