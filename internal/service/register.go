@@ -27,7 +27,7 @@ func (s *service) UserRegister(
 	u := deserialize.Model()
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Printf("service: UserRegister GenerateFromPassword - error {%v}, password - {%s};", err, u.Password)
+		log.Printf("service: UserRegister GenerateFromPassword - error {%v};", err)
 		return nil, ErrServiceInternal
 	}
 	u.Password = string(hashedPassword)

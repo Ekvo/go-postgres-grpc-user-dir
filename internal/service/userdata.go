@@ -18,13 +18,13 @@ func (s *service) UserData(
 	ctx context.Context, req *user.UserDataRequest) (*user.UserDataResponse, error) {
 	deserialize := deserializer.NewIDDecode()
 	if err := deserialize.Decode(ctx); err != nil {
-		log.Printf("service: UserData Decode error - %v", err)
+		log.Printf("service: UserData Decode error - {%v};", err)
 		return nil, ErrServiceInternal
 	}
 
 	u, err := s.DBProvider.FindUserByID(ctx, deserialize.UserID())
 	if err != nil {
-		log.Printf("service: UserData FindUserByID error - %v", err)
+		log.Printf("service: UserData FindUserByID error - {%v};", err)
 		return nil, ErrServiceNotFound
 	}
 

@@ -54,7 +54,7 @@ func (s *service) userUpdate(ctx context.Context, userNewData *model.User) error
 	if userNewData.Password != "" {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userNewData.Password), bcrypt.DefaultCost)
 		if err != nil {
-			log.Printf("service: userUpdate GenerateFromPassword - error {%v}, password - {%s};", err, userNewData.Password)
+			log.Printf("service: userUpdate GenerateFromPassword - error {%v};", err)
 			return ErrServiceInternal
 		}
 		userNewData.Password = string(hashedPassword)
