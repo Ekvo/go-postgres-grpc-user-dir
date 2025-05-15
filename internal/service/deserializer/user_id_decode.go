@@ -19,6 +19,7 @@ func (id *IDDecode) UserID() uint {
 	return uint(id.id)
 }
 
+// Decode - get user ID from context
 func (id *IDDecode) Decode(ctx context.Context) (err error) {
 	content, ok := ctx.Value("content").(jwtsign.Content)
 	if !ok {

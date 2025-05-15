@@ -1,3 +1,4 @@
+// describes indexes and tables for a database
 package db
 
 import "context"

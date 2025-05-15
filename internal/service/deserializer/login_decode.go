@@ -1,3 +1,4 @@
+// describes the steps to create a model.Login
 package deserializer
 
 import (
@@ -44,6 +45,7 @@ func (ul *LoginDecode) parseReq(req *user.UserLoginRequest) {
 	ul.Password = req.GetPassword()
 }
 
+// validReq - check critical fields for login user
 func (ul *LoginDecode) validReq() error {
 	msgErr := utils.Message{}
 	if !reEmail.MatchString(ul.Email) {

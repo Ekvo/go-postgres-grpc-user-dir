@@ -56,7 +56,7 @@ grpcurl -plaintext -H "authorization: bearer JWT_TOKEN" -proto=go-grpc-apis/user
 ```
 * Update user data - `UserUpdate`
 ```http request
-grpcurl -plaintext -H "authorization: bearer JWT_TOKEN" -d '{ "last_name": "Ekvo", "updated_at": "2024-10-05T16:34:56Z"}' -proto=go-grpc-apis/user/v1/user.proto localhost:50051 user.v1.UserService/UserUpdate
+grpcurl -plaintext -H "authorization: bearer JWT_TOKEN" -d '{"login": "linxy","first_name": "Dmitry", "last_name": "Tai","email": "linxybest@gmail.com", "updated_at": "2024-10-05T16:34:56Z"}' -proto=go-grpc-apis/user/v1/user.proto localhost:50051 user.v1.UserService/UserUpdate
 ```
 * Remove user  - `UserDelete`
 ```http request

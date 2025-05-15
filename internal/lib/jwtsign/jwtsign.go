@@ -1,3 +1,6 @@
+// contains a global non-exported variable 'secretKey' for working with jwt
+// sets secretKey during application startup from config.Config
+// contains functions for generating and parsing jwt.Token
 package jwtsign
 
 import (
@@ -54,6 +57,7 @@ func TokenGenerator(content Content) (string, error) {
 	return jwtToken.SignedString([]byte(secretKey))
 }
 
+// GetContentFromToken - get all fields without "exploration" from token
 func GetContentFromToken(token string) (Content, error) {
 	jwtToken, err := tokenRetrive(token)
 	if err != nil {
@@ -62,6 +66,7 @@ func GetContentFromToken(token string) (Content, error) {
 	return receiveContentFromToken(jwtToken)
 }
 
+// tokenRetrive - get jwt.Token from string
 func tokenRetrive(value string) (*jwt.Token, error) {
 	return jwt.Parse(value, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -74,6 +79,7 @@ func tokenRetrive(value string) (*jwt.Token, error) {
 	})
 }
 
+// receiveContentFromToken - check token expiration date and get date from jwt.MapClaims
 func receiveContentFromToken(token *jwt.Token) (Content, error) {
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {

@@ -1,3 +1,4 @@
+// rulse for user registration
 package deserializer
 
 import (
@@ -57,6 +58,7 @@ func (ud *UserDecode) parseReq(req *user.UserRegisterRequest) {
 	ud.CreatedAt = req.GetCreatedAt().AsTime()
 }
 
+// validReq - check critical fields for new user registration
 func (ud *UserDecode) validReq() error {
 	msgErr := utils.Message{}
 	if ud.Login = strings.TrimSpace(ud.Login); ud.Login == "" {

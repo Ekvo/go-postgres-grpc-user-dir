@@ -8,6 +8,7 @@ import (
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/db"
 )
 
+// errors for response
 var (
 	ErrServiceInternal = errors.New("internal error")
 
@@ -26,6 +27,7 @@ type Service interface {
 	user.UserServiceServer
 }
 
+// Depends- if necessary add another base
 type Depends struct {
 	DBProvider db.Provider
 }

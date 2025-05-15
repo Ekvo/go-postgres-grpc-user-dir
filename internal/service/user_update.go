@@ -45,13 +45,20 @@ func (s *service) UserUpdate(
 // creates a user for writing to the database (NewData) -> (internal/model/user.go)
 // updates user data in the storage
 func (s *service) userUpdate(ctx context.Context, userNewData *model.User) error {
-	u, err := s.DBProvider.FindUserByID(ctx, userNewData.ID)
+	userOldData, err := s.DBProvider.FindUserByID(ctx, userNewData.ID)
 	if err != nil {
 		log.Printf("service: userUpdate FindUserByID error - {%v};", err)
 		return ErrServiceNotFound
 	}
 
-	if userNewData.Password != "" {
+	if err := userOldData.ValidUpdate(userNewData); err != nil {
+		log.Printf("service: userUpdate ValidUpdate error - {%v};", err)
+		return ErrServiceUpdateDataInvalid
+	}
+
+	if userNewData.Password == "" {
+		userNewData.Password = userOldData.Password
+	} else {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userNewData.Password), bcrypt.DefaultCost)
 		if err != nil {
 			log.Printf("service: userUpdate GenerateFromPassword - error {%v};", err)
@@ -59,13 +66,9 @@ func (s *service) userUpdate(ctx context.Context, userNewData *model.User) error
 		}
 		userNewData.Password = string(hashedPassword)
 	}
+	userNewData.CreatedAt = userOldData.CreatedAt
 
-	if err := u.NewData(userNewData); err != nil {
-		log.Printf("service: userUpdate NewData error - {%v};", err)
-		return ErrServiceUpdateDataInvalid
-	}
-
-	if err := s.DBProvider.UpdateUser(ctx, u); err != nil {
+	if err := s.DBProvider.UpdateUser(ctx, userNewData); err != nil {
 		log.Printf("service: userUpdate UpdateUser error - {%v};", err)
 		return ErrServiceInternal
 	}

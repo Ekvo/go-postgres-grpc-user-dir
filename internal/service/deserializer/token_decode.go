@@ -30,6 +30,7 @@ func (td *TokenDecode) Token() string {
 	return td.token
 }
 
+// Decode - get from header "authorization" and parse bearer JWTtoken
 func (td *TokenDecode) Decode(ctx context.Context) error {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {

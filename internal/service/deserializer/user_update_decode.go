@@ -1,3 +1,4 @@
+// rules for parsing user data from a request to update it in the DB
 package deserializer
 
 import (
@@ -57,9 +58,16 @@ func (uud *UserUpdateDecode) parseReq(req *user.UserUpdateRequest) {
 	uud.UpdatedAt = req.GetUpdatedAt().AsTime()
 }
 
+// validReq - check critical fields for update user data
 func (uud *UserUpdateDecode) validReq() error {
 	msgErr := utils.Message{}
-	if uud.Email = strings.TrimSpace(uud.Email); uud.Email != "" && !reEmail.MatchString(uud.Email) {
+	if uud.Login = strings.TrimSpace(uud.Login); uud.Login == "" {
+		msgErr["login"] = ErrDeserializerEmpty
+	}
+	if uud.FirstName = strings.TrimSpace(uud.FirstName); uud.FirstName == "" {
+		msgErr["first-name"] = ErrDeserializerEmpty
+	}
+	if uud.Email = strings.TrimSpace(uud.Email); !reEmail.MatchString(uud.Email) {
 		msgErr["email"] = ErrDeserializerInvalid
 	}
 	if uud.UpdatedAt.IsZero() {
@@ -68,8 +76,6 @@ func (uud *UserUpdateDecode) validReq() error {
 	if len(msgErr) > 0 {
 		return fmt.Errorf("deserializer: invalid user update - %s", msgErr.String())
 	}
-	uud.Login = strings.TrimSpace(uud.Login)
-	uud.FirstName = strings.TrimSpace(uud.FirstName)
 	uud.LastName = strings.TrimSpace(uud.LastName)
 	uud.Password = strings.TrimSpace(uud.Password)
 	return nil

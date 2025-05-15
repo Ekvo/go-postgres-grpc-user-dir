@@ -1,3 +1,5 @@
+// describes the rule for obtaining data from a request and
+// creating objects from the "model" package for use at the business layer
 package deserializer
 
 import (
