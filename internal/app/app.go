@@ -1,3 +1,4 @@
+// initialization of application start and stop
 package app
 
 import (
@@ -17,6 +18,7 @@ import (
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/service"
 )
 
+// Application - contains a server, server listener,business service, an interface for working with the store
 type Application struct {
 	userRepository db.Provider
 	userService    service.Service
@@ -24,6 +26,9 @@ type Application struct {
 	listener       net.Listener
 }
 
+// NewApplication
+// create: secretKey for jwt, net.Listener for server, open pgx.pool, service.NewService, grpc.NewServer
+// save all main variables inside &Application{}
 func NewApplication(cfg *config.Config) (*Application, error) {
 	if err := jwtsign.NewSecretKey(cfg); err != nil {
 		return nil, fmt.Errorf("app: jwt error - %w", err)
@@ -48,6 +53,7 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 	return app, nil
 }
 
+// Run - registers server then start server inside go func()
 func (a *Application) Run() {
 	user.RegisterUserServiceServer(a.srv, a.userService)
 
@@ -60,6 +66,7 @@ func (a *Application) Run() {
 	}()
 }
 
+// Stop - close pgx.pool, call GracefulStop() with select {<- ctx, time.After}
 func (a *Application) Stop() {
 	defer a.userRepository.ClosePool()
 

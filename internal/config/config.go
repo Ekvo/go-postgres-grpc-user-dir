@@ -1,3 +1,4 @@
+// get and parse initial data from files or ENV variables
 package config
 
 import (
@@ -12,6 +13,7 @@ import (
 	"github.com/Ekvo/go-postgres-grpc-user-dir/pkg/utils"
 )
 
+// Config - contains url for database, server port with server network, secret key for jwt
 type Config struct {
 	DBURL string `mapstructure:"DB_URL"`
 
@@ -21,6 +23,7 @@ type Config struct {
 	JWTSecretKey string `mapstructure:"JWT_SECRET"`
 }
 
+// NewConfig - load data from ENV (file or ENV variables)
 func NewConfig(pathToEnv string) (*Config, error) {
 	if err := godotenv.Load(pathToEnv); err != nil {
 		// work with ENV
@@ -42,6 +45,7 @@ func NewConfig(pathToEnv string) (*Config, error) {
 	return cfg, nil
 }
 
+// getNameEnv - return all names of ENV
 func getNameEnv() []string {
 	return []string{
 		"DB_URL",

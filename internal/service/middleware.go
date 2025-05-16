@@ -1,3 +1,4 @@
+// contains middleware for request method checking and authorization if necessary
 package service
 
 import (

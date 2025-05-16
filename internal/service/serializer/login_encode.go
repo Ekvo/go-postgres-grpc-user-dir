@@ -1,3 +1,4 @@
+// create jwt.Toke for Response
 package serializer
 
 import (

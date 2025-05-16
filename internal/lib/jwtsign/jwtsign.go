@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	// ErrJWTSecretKeySetAfterRun - attempt to change non-empty secretkey
 	ErrJWTSecretKeySetAfterRun = errors.New("secret key already exists")
 
 	ErrJWTSecretKeyEmpty = errors.New("secret key not found")

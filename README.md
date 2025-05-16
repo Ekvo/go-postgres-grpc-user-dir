@@ -1,8 +1,65 @@
 # go-postgres-grpc-user-dir
 
 ---
-
 This repository implemetn **proto** file: [go-grpc-apis/user/v1](https://github.com/Ekvo/go-grpc-apis/tree/main/user/v1 "https://github.com/Ekvo/go-grpc-apis/tree/main/user/v1")  
+
+The main idea is to implement a service for the user data handler. We can `create`, `read`, `update` and `delete` (`CRUD`) and check authorization if we need to access the user data store.
+Also deploy this service in a container using SQL (`postgresql`) as the storage. 
+
+
+### Structure of application
+
+```txt
+├── cmd/app
+│   └──── main.go  
+├── init
+│   └──── .env // have .env file - because it's not a commercial service 
+├── internal
+|   ├── app             // heart of application
+|   │   └──── app.go    // run and stop
+|   ├── config
+|   │   └──── config.go   
+|   ├── model            // data models define
+|   │   ├──── login.go    
+|   │   └──── user.go    
+|   ├── lib            
+|   │   └──── jwtsign     // work with jwt.Token  
+|   │         └──── jwtsign.go    
+|   ├── listen  
+|   │   └──── listen.go   // listen for server
+|   └── servises 
+|       ├── deserializer  // entities to get data from query or ctx
+|       │   ├── deserializer.go      
+|       │   ├── login_decode.go     
+|       │   ├── token_decode.go      
+|       │   ├── user_deocde.go   
+|       │   ├── user_id_decode.go     
+|       │   └── user_update_decode.go 
+|       ├── serializer    // entities - create objects for response
+|       │   ├── login_encode.go      
+|       │   └── user_encode.go  
+|       ├── middleware.go // authorization 
+|       ├── service.go    // biz logic
+|       ├── user_data.go  
+|       ├── user_delete.go 
+|       ├── user_login.go       
+|       ├── user_register.go 
+|       └── user_update.go   
+├── pkg/utils 
+│   └──── utils.go         // general helper functions
+└─── script
+     ├──── init.sql         
+     └──── start.sh  
+ .gitignore       
+ compose.yaml
+ Dockerfile
+ README.md
+```
+
+### Tech stack: 
+- golang 1.24.1, sql, PostgreSQL, pgx/v5, net/http, testify,  viper, jwt, git, Dockerfile, compose.yaml, linux, shell
+
+### Main 'service' from protofile
 
 ```protobuf
 service UserService {
@@ -23,16 +80,25 @@ service UserService {
 }
 ```
 
+
 ### Start with compose.yaml
 ```bash
+# have .env file 
 docker compose --env-file ./init/.env up -d
+```
+
+### Local start
+To run locally, you need to start Docker, see above, stop the server for Servec (port 50051:50001)
+```bash
+# after start docker and close server
+go run cmd/app/main.go
 ```
 
 ### grpcurl
 
-for grpcurl need load user.proto
+For `grpcurl` need load `user.proto`
 
-```protobuf
+```bash
 git clone https://github.com/Ekvo/go-grpc-apis.git
 ```
 
@@ -62,10 +128,7 @@ grpcurl -plaintext -H "authorization: bearer JWT_TOKEN" -d '{"login": "linxy","f
 ```http request
 grpcurl -plaintext -H "authorization: bearer JWT_TOKEN" -proto=go-grpc-apis/user/v1/user.proto localhost:50051 user.v1.UserService/UserDelete
 ```
-
 ---
-
-
 
 ### Basic principles:
  * DTO
@@ -73,22 +136,64 @@ grpcurl -plaintext -H "authorization: bearer JWT_TOKEN" -proto=go-grpc-apis/user
  
 ### Stuff 
  
-* postgresql use pgx
+* Use pgx driver for work with postgresql in golang
 ```bash
 go get github.com/jackc/pgx/v5
 ```
 
-* for parse config
+* For parse config
 ```bash
 go get github.com/spf13/viper
 ```
 
-* read data from .env
+* Read data from .env
 ```bash
 go get github.com/joho/godotenv
 ```
 
-* use jwt
+* Use jwt for authorization
 ```bash
 go get github.com/golang-jwt/jwt/v5
 ```
+
+### Test 
+
+* For comfortable testing is used
+```bash
+go get github.com/stretchr/testify
+```
+
+* Start test from main directory
+```bash
+go test ./...
+```
+
+we can also find out the test **coverage** of specific packages of an application.
+```bash
+# . - set direct for testing
+go test . -coverprofile=coverage.out
+```
+
+```bash
+# after 'go test ./some_direct/_test.go -coverprofile=coverage.out'
+go tool cover -html=coverage
+```
+
+##### Сoverage of packages
+
+| file                                      | percent % |
+|:------------------------------------------|----------:|
+| internal/db/db.go                         |      75.9 |
+| internal/db/query.go                      |     100.0 |
+| internal/db/schema.go                     |     100.0 |
+|                                           |           |
+| internal/service/service.go               |     100.0 |
+| internal/service/user_data.go             |      60.0 |
+| internal/service/user_delete.go           |      75.0 |
+| internal/service/user_login.go            |      88.2 |
+| internal/service/user_register.go         |      85.7 |
+| internal/service/user_update.go           |    74.2 |
+| internal/service/middleware.go            |      79.2 |
+
+p.s. Thanks for your time:)
+

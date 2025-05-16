@@ -1,3 +1,4 @@
+// create user data for Response
 package serializer
 
 import (

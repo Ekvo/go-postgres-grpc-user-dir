@@ -10,6 +10,7 @@ import (
 )
 
 func (p *provider) CreateUser(ctx context.Context, user *model.User) (uint, error) {
+	userID := uint(0)
 	err := p.dbPool.QueryRow(ctx, `
 INSERT INTO users (
                    login,
@@ -27,8 +28,8 @@ RETURNING id;`,
 		whenStringEmptyThenNULL(user.LastName), //4
 		user.Email,                             //5
 		user.CreatedAt,                         //6
-	).Scan(&user.ID)
-	return user.ID, err
+	).Scan(&userID)
+	return userID, err
 }
 
 func (p *provider) FindUserByEmail(ctx context.Context, email string) (*model.User, error) {

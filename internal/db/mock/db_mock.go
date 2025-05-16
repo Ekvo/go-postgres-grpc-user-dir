@@ -7,17 +7,7 @@ import (
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/model"
 )
 
-/*
-type Provider interface {
-	CreateUser(ctx context.Context, user *model.User) (uint, error)
-	FindUserByEmail(ctx context.Context, email string) (*model.User, error)
-	FindUserByID(ctx context.Context, id uint) (*model.User, error)
-	UpdateUser(ctx context.Context, user *model.User) error
-	RemoveUserByID(ctx context.Context, id uint) error
-	ClosePool()
-}
-*/
-
+// ErrMockDB - imitation error from mockbase
 var ErrMockDB = errors.New("bad query")
 
 type mockProvider struct {
