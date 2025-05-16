@@ -88,7 +88,7 @@ docker compose --env-file ./init/.env up -d
 ```
 
 ### Local start
-To run locally, you need to start Docker, see above, stop the server for Servec (port 50051:50001)
+To run locally, you need to start Docker, see above, stop the server for service (port 50051:50001)
 ```bash
 # after start docker and close server
 go run cmd/app/main.go
