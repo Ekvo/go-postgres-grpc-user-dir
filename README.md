@@ -19,6 +19,12 @@ Also deploy this service in a container using SQL (`postgresql`) as the storage.
 |   │   └──── app.go    // run and stop
 |   ├── config
 |   │   └──── config.go   
+|   ├── db
+|   │   ├──── mock
+|   │   │     └──── db_mock.go // for test service
+|   │   ├──── db.go   
+|   │   ├──── query.go  
+|   │   └──── schema.go  // tables and indexes
 |   ├── model            // data models define
 |   │   ├──── login.go    
 |   │   └──── user.go    
@@ -192,7 +198,7 @@ go tool cover -html=coverage
 | internal/service/user_delete.go           |      75.0 |
 | internal/service/user_login.go            |      88.2 |
 | internal/service/user_register.go         |      85.7 |
-| internal/service/user_update.go           |    74.2 |
+| internal/service/user_update.go           |    74.2   |
 | internal/service/middleware.go            |      79.2 |
 
 p.s. Thanks for your time:)
