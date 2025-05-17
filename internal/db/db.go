@@ -56,7 +56,7 @@ func OpenPool(ctx context.Context, cfg *config.Config) (*provider, error) {
 
 func (p *provider) ClosePool() {
 	p.dbPool.Close()
-	log.Print("db: *pgxpool.Pool is closed")
+	log.Print("db: database is closed")
 }
 
 // initPool - parse DBURL, set pgxpool.Config, open pgx.pool

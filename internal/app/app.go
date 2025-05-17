@@ -68,18 +68,21 @@ func (a *Application) Run() {
 
 // Stop - close pgx.pool, call GracefulStop() with select {<- ctx, time.After}
 func (a *Application) Stop() {
-	defer a.userRepository.ClosePool()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	gracefully := true
+	timer := time.AfterFunc(10*time.Second, func() {
+		gracefully = false
+		log.Print("app: server stopped - forcing stop\n")
+		a.srv.Stop()
+	})
+	defer func() {
+		timer.Stop()
+		_ = a.listener.Close()
+		a.userRepository.ClosePool()
+	}()
 
 	a.srv.GracefulStop()
-
-	select {
-	case <-ctx.Done():
-		log.Print("app: shutdown took too long, forcing stop")
-		a.srv.Stop()
-	case <-time.After(10 * time.Second):
-		log.Print("app: server stopped gracefully")
+	if gracefully {
+		log.Print("app: server stopped - gracefully\n")
 	}
+
 }

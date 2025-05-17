@@ -7,7 +7,7 @@ The main idea is to implement a service for the user data handler. We can `creat
 Also deploy this service in a container using SQL (`postgresql`) as the storage. 
 
 
-### Structure of application
+### Structure of applicationgodo
 
 ```txt
 ├── cmd/app
@@ -74,12 +74,9 @@ service UserService {
   rpc UserLogin(UserLoginRequest) returns (UserLoginResponse);
 
   // UserData, UserUpdate, UserDelete - get 'user_id' from metadata -H "authorization"
-
-  // by 'user_id' find 'User' in 'db'
+  
   rpc UserData(UserDataRequest) returns (UserDataResponse);
-
-  // by 'user_id' find 'User' in 'db'
-  // if found -> set empty 'User' fields with old User data from 'db' -> Update
+ 
   rpc UserUpdate(UserUpdateRequest) returns (UserUpdateResponse);
 
   rpc UserDelete(UserDeleteRequest) returns (UserDeleteResponse);
