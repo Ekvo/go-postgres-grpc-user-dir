@@ -5,6 +5,8 @@ package jwtsign
 
 import (
 	"errors"
+	"log"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -13,25 +15,30 @@ import (
 )
 
 var (
-	// ErrJWTSecretKeySetAfterRun - attempt to change non-empty secretkey
-	ErrJWTSecretKeySetAfterRun = errors.New("secret key already exists")
-
 	ErrJWTSecretKeyEmpty = errors.New("secret key not found")
 
 	// ErrJWTContentInvalid - len('Content'(map[string]string)==0)
 	ErrJWTContentInvalid = errors.New("invalid content")
 )
 
-// SecretKey -  key for jwt.Token
-var secretKey = ""
+var (
+	// once - used in NewSecretKey
+	once sync.Once
+
+	// SecretKey -  key for jwt.Token
+	secretKey = ""
+)
 
 // NewSecretKey - call in Run -> during application startup
 func NewSecretKey(cfg *config.Config) error {
-	if secretKey == "" {
+	once.Do(func() {
 		secretKey = cfg.JWTSecretKey
-		return nil
+		log.Print("jwtsign: secret key initialized")
+	})
+	if secretKey == "" {
+		return ErrJWTSecretKeyEmpty
 	}
-	return ErrJWTSecretKeySetAfterRun
+	return nil
 }
 
 // time exploration for jwt.Token see 'TokenGenerator'

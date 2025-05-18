@@ -58,6 +58,7 @@ func (a *Application) Run() {
 	user.RegisterUserServiceServer(a.srv, a.userService)
 
 	go func() {
+		log.Print("go app: start server\n")
 		if err := a.srv.Serve(a.listener); err != nil {
 			a.userRepository.ClosePool()
 			log.Fatalf("go app: server error - %v", err)
