@@ -22,9 +22,24 @@ FROM alpine:latest
 
 LABEL authors="ekvo"
 
-ENV DB_URL=postgresql://manager:qwert12345@db:5432/userdb
-ENV SRV_PORT_USER=50051
+ENV DB_HOST=db
+ENV DB_PORT=5432
+ENV DB_USER=manager
+ENV DB_PASSWORD=qwert12345
+ENV DB_PORT=5432
+ENV DB_NAME=userdb
+ENV DB_MAX_CONN=10
+ENV DB_MIN_CONN=1
+ENV DB_CONN_MAX_LIFE_TIME=24h
+ENV DB_CONN_MAX_IDLE_TIME=15m
+ENV DB_CONN_TIMEOUT=1m
+ENV DB_HEALTH_CHECK_PERIOD=1m
+
+ENV MIGRATION_PATH=sql/migrations
+
+ENV SRV_PORT=50051
 ENV SRV_NETWORK=tcp
+
 ENV JWT_SECRET=StatusSeeOther
 
 RUN apk update && \
@@ -35,6 +50,7 @@ RUN apk add --no-cache ca-certificates
 WORKDIR /usr/src/app
 
 COPY --from=builder /usr/src/build/user /usr/src/app/user
+COPY ./sql /usr/src/app/sql
 
 COPY script/start.sh /start.sh
 RUN chmod +x /start.sh

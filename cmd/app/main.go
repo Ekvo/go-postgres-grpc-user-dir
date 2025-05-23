@@ -13,12 +13,12 @@ import (
 func main() {
 	cfg, err := config.NewConfig("./init/.env")
 	if err != nil {
-		log.Fatalf("main: config error - %v", err)
+		log.Fatalf("main: config error - {%v};", err)
 	}
 
 	application, err := app.NewApplication(cfg)
 	if err != nil {
-		log.Fatalf("main: application error - %v", err)
+		log.Fatalf("main: application error - {%v};", err)
 	}
 
 	application.Run()

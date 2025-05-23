@@ -8,12 +8,12 @@ services:
       - "${DB_PORT}:${DB_PORT}"
     volumes:
       - db-user:/var/lib/postgresql/data
-      - ./script/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./sql/init_compose.sql:/docker-entrypoint-initdb.d/init_compose.sql
   app:
     image: go-postgres-grpc-user-dir:${IMAGE_VERSION}
     build: .
     ports:
-      - "${SRV_PORT_USER}:${SRV_PORT_USER}"
+      - "${SRV_PORT}:${SRV_PORT}"
     entrypoint: /bin/sh
     command: /start.sh
 

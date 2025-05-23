@@ -5,6 +5,7 @@ package jwtsign
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -36,7 +37,7 @@ func NewSecretKey(cfg *config.Config) error {
 		log.Print("jwtsign: secret key initialized")
 	})
 	if secretKey == "" {
-		return ErrJWTSecretKeyEmpty
+		return fmt.Errorf("jwtsign: NewSecretKey error - {%w};", ErrJWTSecretKeyEmpty)
 	}
 	return nil
 }

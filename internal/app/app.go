@@ -3,7 +3,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net"
 	"time"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/config"
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/db"
+	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/db/migration"
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/lib/jwtsign"
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/listen"
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/service"
@@ -27,21 +27,29 @@ type Application struct {
 }
 
 // NewApplication
-// create: secretKey for jwt, net.Listener for server, open pgx.pool, service.NewService, grpc.NewServer
+// create: secretKey for jwt,do migration, net.Listener for server, open pgx.pool, service.NewService, grpc.NewServer
 // save all main variables inside &Application{}
 func NewApplication(cfg *config.Config) (*Application, error) {
+	log.Print("app: NewApplication start")
+	ctx := context.Background()
+
 	if err := jwtsign.NewSecretKey(cfg); err != nil {
-		return nil, fmt.Errorf("app: jwt error - %w", err)
+		return nil, err
 	}
 
-	listener, err := listen.NewListen(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("app: Listener error - %w", err)
+	mig := migration.NewMigration(&cfg.Migrations)
+	if err := mig.Up(ctx); err != nil {
+		return nil, err
 	}
 
-	dbProvider, err := db.OpenPool(context.Background(), cfg)
+	listener, err := listen.NewListen(&cfg.Server)
 	if err != nil {
-		return nil, fmt.Errorf("app: db error - %w", err)
+		return nil, err
+	}
+
+	dbProvider, err := db.OpenPool(ctx, &cfg.DB)
+	if err != nil {
+		return nil, err
 	}
 
 	app := &Application{}
@@ -50,29 +58,35 @@ func NewApplication(cfg *config.Config) (*Application, error) {
 	app.srv = grpc.NewServer(grpc.UnaryInterceptor(service.Authorization))
 	app.listener = listener
 
+	log.Print("app: NewApplication is created")
+
 	return app, nil
 }
 
 // Run - registers server then start server inside go func()
 func (a *Application) Run() {
+	log.Print("app: Run")
+
 	user.RegisterUserServiceServer(a.srv, a.userService)
 
 	go func() {
-		log.Print("go app: start server\n")
+		log.Print("go app: start server")
 		if err := a.srv.Serve(a.listener); err != nil {
 			a.userRepository.ClosePool()
-			log.Fatalf("go app: server error - %v", err)
+			log.Fatalf("go app: server error - {%v};", err)
 		}
-		log.Print("go app: stopped serving\n")
+		log.Print("go app: stopped serving")
 	}()
 }
 
 // Stop - close pgx.pool, call GracefulStop() with select {<- ctx, time.After}
 func (a *Application) Stop() {
+	log.Print("app: Stop")
+
 	gracefully := true
 	timer := time.AfterFunc(10*time.Second, func() {
 		gracefully = false
-		log.Print("app: server stopped - forcing stop\n")
+		log.Print("app: server stopped - forcing stop")
 		a.srv.Stop()
 	})
 	defer func() {
@@ -83,7 +97,6 @@ func (a *Application) Stop() {
 
 	a.srv.GracefulStop()
 	if gracefully {
-		log.Print("app: server stopped - gracefully\n")
+		log.Print("app: server stopped - gracefully")
 	}
-
 }

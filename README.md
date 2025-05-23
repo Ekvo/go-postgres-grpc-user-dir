@@ -20,6 +20,8 @@ Also deploy this service in a container using SQL (`postgresql`) as the storage.
 |   ├── config
 |   │   └──── config.go   
 |   ├── db
+|   │   ├──── migration
+|   │   │     └──── migration.go 
 |   │   ├──── mock
 |   │   │     └──── db_mock.go // for test service
 |   │   ├──── db.go   
@@ -53,9 +55,11 @@ Also deploy this service in a container using SQL (`postgresql`) as the storage.
 |       └── user_update.go   
 ├── pkg/utils 
 │   └──── utils.go         // general helper functions
-└─── script
-     ├──── init.sql         
-     └──── start.sh  
+├── script        
+│   └──── start.sh
+└── sql
+    ├──── migrations // contain num_files.up.sql            
+    └──── init_compose.sql // use in compose.yaml for create data base  
  .gitignore       
  compose.yaml
  Dockerfile
@@ -138,6 +142,11 @@ grpcurl -plaintext -H "authorization: bearer JWT_TOKEN" -proto=go-grpc-apis/user
  * Solid
  
 ### Stuff 
+
+* migration tools
+```bash
+go get github.com/golang-migrate/migrate/v4
+```
  
 * Use pgx driver for work with postgresql in golang
 ```bash
@@ -195,7 +204,7 @@ go tool cover -html=coverage
 | internal/service/user_delete.go           |      75.0 |
 | internal/service/user_login.go            |      88.2 |
 | internal/service/user_register.go         |      85.7 |
-| internal/service/user_update.go           |    74.2   |
+| internal/service/user_update.go           |      74.2 |
 | internal/service/middleware.go            |      79.2 |
 
 p.s. Thanks for your time:)

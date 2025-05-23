@@ -8,18 +8,40 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/config"
+	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/db/migration"
 	"github.com/Ekvo/go-postgres-grpc-user-dir/internal/model"
 )
 
+func newMigrations(ctx context.Context) error {
+	cfg := &config.MigrationConfig{
+		PathToMigrations: "../../sql/migrations",
+		DBURL:            `postgresql://manager:qwert12345@127.0.0.1:5432/testdb?sslmode=disable`,
+	}
+
+	mig := migration.NewMigration(cfg)
+
+	return mig.Up(ctx)
+}
+
 func newProviderForTest(ctx context.Context) (*provider, error) {
-	pr, err := OpenPool(ctx, &config.Config{
-		DBURL: `postgresql://manager:qwert12345@127.0.0.1:5432/testdb`,
-	})
+	cfg := &config.DataBaseConfig{
+		URL:               `postgresql://manager:qwert12345@127.0.0.1:5432/testdb`,
+		MaxConn:           1,
+		MinConn:           1,
+		ConnMaxLifeTime:   1 * time.Hour,
+		ConnMaxIdleTime:   15 * time.Minute,
+		ConnTime:          5 * time.Minute,
+		HealthCheckPeriod: 1 * time.Minute,
+	}
+
+	pr, err := OpenPool(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -122,6 +144,9 @@ func TestProvider_CreateUser(t *testing.T) {
 
 	ctx := context.Background()
 
+	err := newMigrations(ctx)
+	requires.NoError(err, "wrong migrations")
+
 	pr, err := newProviderForTest(ctx)
 	requires.NoError(err, "wrong connect to db")
 	defer pr.ClosePool()
@@ -191,6 +216,9 @@ func TestProvider_FindUserByEmail(t *testing.T) {
 	}
 
 	ctx := context.Background()
+
+	err := newMigrations(ctx)
+	requires.NoError(err, "wrong migrations")
 
 	pr, err := newProviderForTest(ctx)
 	requires.NoError(err, "wrong connect to db")
@@ -280,6 +308,9 @@ func TestProvider_FindUserByID(t *testing.T) {
 	}
 
 	ctx := context.Background()
+
+	err := newMigrations(ctx)
+	requires.NoError(err, "wrong migrations")
 
 	pr, err := newProviderForTest(ctx)
 	requires.NoError(err, "wrong connect to db")
@@ -431,6 +462,9 @@ func TestProvider_DeleteUser(t *testing.T) {
 	}
 
 	ctx := context.Background()
+
+	err := newMigrations(ctx)
+	requires.NoError(err, "wrong migrations")
 
 	pr, err := newProviderForTest(ctx)
 	requires.NoError(err, "wrong connect to db")

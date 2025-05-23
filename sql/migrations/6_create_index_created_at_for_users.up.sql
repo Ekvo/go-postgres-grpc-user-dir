@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS created_at_btree_index ON users (created_at);

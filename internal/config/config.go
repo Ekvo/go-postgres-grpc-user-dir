@@ -2,83 +2,159 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"log"
-	"regexp"
-	"strconv"
+	"time"
 
+	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
-	"github.com/spf13/viper"
 
 	"github.com/Ekvo/go-postgres-grpc-user-dir/pkg/utils"
 )
 
+var ErrConfigEmpty = errors.New("empty")
+
 // Config - contains url for database, server port with server network, secret key for jwt
 type Config struct {
-	DBURL string `mapstructure:"DB_URL"`
+	DB         DataBaseConfig  `envPrefix:"DB_"`
+	Migrations MigrationConfig `envPrefix:"MIGRATION_"`
+	Server     ServerConfig    `envPrefix:"SRV_"`
 
-	SRVPort    string `mapstructure:"SRV_PORT_USER"`
-	SRVNetwork string `mapstructure:"SRV_NETWORK"`
+	JWTSecretKey string `env:"JWT_SECRET"`
 
-	JWTSecretKey string `mapstructure:"JWT_SECRET"`
+	msgErr utils.Message `env:"-"`
 }
 
 // NewConfig - load data from ENV (file or ENV variables)
 func NewConfig(pathToEnv string) (*Config, error) {
-	if err := godotenv.Load(pathToEnv); err != nil {
-		// work with ENV
-		log.Printf("config: .env file error - %v", err)
+	log.Print("config: config start")
+
+	cfg := &Config{msgErr: utils.Message{}}
+	if err := cfg.parse(pathToEnv); err != nil {
+		return nil, fmt.Errorf("config: env.Parse error - {%w};", err)
 	}
-	viper.AutomaticEnv()
-	for _, env := range getNameEnv() {
-		if err := viper.BindEnv(env); err != nil {
-			return nil, fmt.Errorf("config: ENV error - %w", err)
-		}
+
+	if !cfg.validConfig() {
+		return nil, fmt.Errorf("config: invalid config - {%s}", cfg.msgErr.String())
 	}
-	cfg := &Config{}
-	if err := viper.Unmarshal(cfg); err != nil {
-		return nil, fmt.Errorf("config: Unmarshal config error - %w", err)
-	}
-	if err := cfg.validConfig(); err != nil {
-		return nil, err
-	}
+
+	log.Print("config: config created")
+
 	return cfg, nil
 }
 
-// getNameEnv - return all names of ENV
-func getNameEnv() []string {
-	return []string{
-		"DB_URL",
-		"SRV_PORT_USER",
-		"SRV_NETWORK",
-		"JWT_SECRET",
+func (cfg *Config) parse(pathToEnv string) error {
+	if err := godotenv.Load(pathToEnv); err != nil {
+		// work with ENV
+		log.Printf("config: .env file error - {%v};", err)
+	}
+	if err := env.Parse(cfg); err != nil {
+		return err
+	}
+	cfg.DB.URL = cfg.DB.url()
+	cfg.Migrations.DBURL = cfg.DB.URL + "?sslmode=disable"
+
+	log.Print("config: parse end")
+
+	return nil
+}
+
+func (cfg *Config) validConfig() bool {
+	cfg.DB.validConfig(cfg.msgErr)
+	cfg.Migrations.validConfig(cfg.msgErr)
+	cfg.Server.validConfig(cfg.msgErr)
+
+	if cfg.JWTSecretKey == "" {
+		cfg.msgErr["jwt-secret-key"] = ErrConfigEmpty
+	}
+	return len(cfg.msgErr) == 0
+}
+
+type DataBaseConfig struct {
+	Host     string `env:"HOST"`
+	Port     uint16 `env:"PORT"`
+	User     string `env:"USER"`
+	Password string `env:"PASSWORD"`
+	Name     string `env:"NAME"`
+
+	URL string `env:"-"`
+
+	MaxConn           uint16        `env:"MAX_CONN"`
+	MinConn           uint16        `env:"MIN_CONN"`
+	ConnMaxLifeTime   time.Duration `env:"CONN_MAX_LIFE_TIME"`
+	ConnMaxIdleTime   time.Duration `env:"CONN_MAX_IDLE_TIME"`
+	ConnTime          time.Duration `env:"CONN_TIMEOUT"`
+	HealthCheckPeriod time.Duration `env:"HEALTH_CHECK_PERIOD"`
+}
+
+func (cfgDB *DataBaseConfig) url() string {
+	return fmt.Sprintf(`postgresql://%s:%s@%s:%d/%s`,
+		cfgDB.User,
+		cfgDB.Password,
+		cfgDB.Host,
+		cfgDB.Port,
+		cfgDB.Name,
+	)
+}
+
+func (cfgDB *DataBaseConfig) validConfig(msgErr utils.Message) {
+	if cfgDB.Host == "" {
+		msgErr["db-host"] = ErrConfigEmpty
+	}
+	if cfgDB.Port == 0 {
+		msgErr["db-port"] = ErrConfigEmpty
+	}
+	if cfgDB.User == "" {
+		msgErr["db-user"] = ErrConfigEmpty
+	}
+	if cfgDB.Password == "" {
+		msgErr["db-password"] = ErrConfigEmpty
+	}
+	if cfgDB.Name == "" {
+		msgErr["db-name"] = ErrConfigEmpty
+	}
+	if cfgDB.MaxConn == 0 {
+		msgErr["db-max-conn"] = ErrConfigEmpty
+	}
+	if cfgDB.MinConn == 0 {
+		msgErr["db-min-conn"] = ErrConfigEmpty
+	}
+	if cfgDB.ConnMaxLifeTime == 0 {
+		msgErr["db-conn-max-life"] = ErrConfigEmpty
+	}
+	if cfgDB.ConnMaxIdleTime == 0 {
+		msgErr["db-conn-idle-tile"] = ErrConfigEmpty
+	}
+	if cfgDB.ConnTime == 0 {
+		msgErr["db-conn-time"] = ErrConfigEmpty
+	}
+	if cfgDB.HealthCheckPeriod == 0 {
+		msgErr["db-health-check-period"] = ErrConfigEmpty
 	}
 }
 
-// reURLDB - pattern for check 'DB_URL'
-// ^postgresql:\/\/[a-zA-Z0-9]+:[a-zA-Z0-9]+@[a-zA-Z0-9\.:]+\/[a-zA-Z0-9]+$
-var reURLDB = regexp.MustCompile(`^postgresql:\/\/[a-zA-Z0-9_-]+:[a-zA-Z0-9]+@(?:[a-zA-Z0-9]+|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):[0-9]{1,5}\/[a-zA-Z0-9_-]+$`)
+type MigrationConfig struct {
+	PathToMigrations string `env:"PATH"`
+	DBURL            string `env:"-"`
+}
 
-func (cfg *Config) validConfig() error {
-	msgErr := utils.Message{}
-	if cfg.DBURL == "" {
-		msgErr["url-DB"] = "empty"
-	} else if !reURLDB.MatchString(cfg.DBURL) {
-		msgErr["url-DB"] = "invalid"
+func (cfgMig *MigrationConfig) validConfig(msgErr utils.Message) {
+	if cfgMig.PathToMigrations == "" {
+		msgErr["migration-path"] = ErrConfigEmpty
 	}
-	if cfg.SRVPort == "" {
-		msgErr["server-port"] = "empty"
-	} else if _, err := strconv.ParseUint(cfg.SRVPort, 10, 16); err != nil {
-		msgErr["server-port"] = "no numeric"
+}
+
+type ServerConfig struct {
+	Port    uint16 `env:"PORT"`
+	Network string `env:"NETWORK"`
+}
+
+func (cfgSrv *ServerConfig) validConfig(msgErr utils.Message) {
+	if cfgSrv.Port == 0 {
+		msgErr["srv-port"] = ErrConfigEmpty
 	}
-	if cfg.SRVNetwork == "" {
-		msgErr["server-network"] = "empty"
+	if cfgSrv.Network == "" {
+		msgErr["srv-network"] = ErrConfigEmpty
 	}
-	if cfg.JWTSecretKey == "" {
-		msgErr["jwt-secret-key"] = "empty"
-	}
-	if len(msgErr) > 0 {
-		return fmt.Errorf("config: invalid config - %s", msgErr.String())
-	}
-	return nil
 }

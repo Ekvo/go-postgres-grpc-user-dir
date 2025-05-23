@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -30,11 +29,12 @@ type provider struct {
 }
 
 // OpenPool - call initPool to open pgx.pool, check Ping, create tables, indexes for the database if they do not exist
-func OpenPool(ctx context.Context, cfg *config.Config) (*provider, error) {
+func OpenPool(ctx context.Context, cfg *config.DataBaseConfig) (*provider, error) {
 	dbPool, err := initPool(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
+
 	if err := dbPool.Ping(ctx); err != nil {
 		dbPool.Close()
 		return nil, fmt.Errorf("db: Ping error - %w", err)
@@ -42,15 +42,7 @@ func OpenPool(ctx context.Context, cfg *config.Config) (*provider, error) {
 	log.Print("db: ping is successful")
 
 	provider := &provider{dbPool: dbPool}
-	if err := provider.createTableIndex(
-		ctx,
-		userTable,
-		loginBTreeIndex,
-		emailBTreeIndex,
-		createdAtBTreeIndex); err != nil {
-		provider.ClosePool()
-		return nil, fmt.Errorf("db: create schema error - %w", err)
-	}
+
 	return provider, nil
 }
 
@@ -60,17 +52,18 @@ func (p *provider) ClosePool() {
 }
 
 // initPool - parse DBURL, set pgxpool.Config, open pgx.pool
-func initPool(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {
-	cfgPgx, err := pgxpool.ParseConfig(cfg.DBURL)
+func initPool(ctx context.Context, cfg *config.DataBaseConfig) (*pgxpool.Pool, error) {
+	cfgPgx, err := pgxpool.ParseConfig(cfg.URL)
 	if err != nil {
 		return nil, fmt.Errorf("db: failed to parse pg config: %w", err)
 	}
-	cfgPgx.MaxConns = int32(10)
-	cfgPgx.MinConns = int32(1)
-	cfgPgx.HealthCheckPeriod = 1 * time.Minute
-	cfgPgx.MaxConnLifetime = 24 * time.Hour
-	cfgPgx.MaxConnIdleTime = 15 * time.Minute
-	cfgPgx.ConnConfig.ConnectTimeout = 1 * time.Minute
+
+	cfgPgx.MaxConns = int32(cfg.MaxConn)
+	cfgPgx.MinConns = int32(cfg.MaxConn)
+	cfgPgx.HealthCheckPeriod = cfg.HealthCheckPeriod
+	cfgPgx.MaxConnLifetime = cfg.ConnMaxLifeTime
+	cfgPgx.MaxConnIdleTime = cfg.ConnMaxIdleTime
+	cfgPgx.ConnConfig.ConnectTimeout = cfg.ConnTime
 	cfgPgx.ConnConfig.DialFunc = (&net.Dialer{
 		KeepAlive: cfgPgx.HealthCheckPeriod,
 		Timeout:   cfgPgx.ConnConfig.ConnectTimeout,
@@ -79,6 +72,8 @@ func initPool(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {
 	if err != nil {
 		return nil, fmt.Errorf("db: failed to parse pg config: %w", err)
 	}
+
 	log.Print("db: database connected")
+
 	return dbPool, nil
 }

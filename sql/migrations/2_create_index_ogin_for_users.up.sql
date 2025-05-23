@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS login_btree_index ON users (login);

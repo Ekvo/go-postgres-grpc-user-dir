@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS first_name_btree_index ON users (first_name);
