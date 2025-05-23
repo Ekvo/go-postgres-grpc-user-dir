@@ -67,7 +67,7 @@ Also deploy this service in a container using SQL (`postgresql`) as the storage.
 ```
 
 ### Tech stack: 
-- golang 1.24.1, sql, PostgreSQL, pgx/v5, net/http, testify,  viper, jwt, git, Dockerfile, compose.yaml, linux, shell
+- golang 1.24.1, sql, PostgreSQL, /migrate/v4, pgx/v5, net/http, caarlos0/env/v11, testify, jwt, git, Dockerfile, compose.yaml, linux, shell
 
 ### Main 'service' from protofile
 
@@ -155,7 +155,7 @@ go get github.com/jackc/pgx/v5
 
 * For parse config
 ```bash
-go get github.com/spf13/viper
+go get github.com/caarlos0/env/v11
 ```
 
 * Read data from .env
