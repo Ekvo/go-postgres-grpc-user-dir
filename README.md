@@ -25,8 +25,7 @@ Also deploy this service in a container using SQL (`postgresql`) as the storage.
 |   │   ├──── mock
 |   │   │     └──── db_mock.go // for test service
 |   │   ├──── db.go   
-|   │   ├──── query.go  
-|   │   └──── schema.go  // tables and indexes
+|   │   └──── query.go  
 |   ├── model            // data models define
 |   │   ├──── login.go    
 |   │   └──── user.go    
